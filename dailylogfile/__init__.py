@@ -100,6 +100,7 @@ class DailyLogFileHandler(logging.FileHandler):
         self._current_day = dt.date.today()
         self._logfile_prefix = self.logfile.with_suffix('')
         self._logfile_suffix = self.logfile.suffix or '.log'
+        self.logfile.parent.mkdir(exist_ok=True, parents=True)
         super().__init__(self._file_name(), mode, encoding, delay, errors)
         self._compress_old_logfiles()
         self._handle_ageoff()
