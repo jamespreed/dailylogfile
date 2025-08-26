@@ -1,12 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "dailylogfile"
 version = "0.1.1"
 description = "Opinionated daily log file manager with date formatting and compression."
+requires-python = ">=3.9"
+dependencies = []
 authors = [
-    { name = "James Reed", email = "james.reed@spectric.com" }
+    { name = "James Reed" },
 ]
-readme = "README.md"
-requires-python = ">=3.8"
+maintainers = [
+    { name = "James Reed" },
+]
+readme = {file = "README.md", content-type = "text/markdown"}
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+]
+
+[project.urls]
+Homepage = "https://github.com/jamespreed/dailylogfile"
+Issues = "https://github.com/jamespreed/dailylogfile/issues"
 
 [project.optional-dependencies]
 test = [
@@ -28,7 +48,3 @@ testpaths = [
     "tests",
 ]
 
-
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
