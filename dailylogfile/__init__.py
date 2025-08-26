@@ -6,6 +6,9 @@ import shutil
 from pathlib import Path
 
 
+__version__ = '0.1.1'
+
+
 def _date_format_to_regex(date_format: str) -> str:
     """
     Converts a date format string to a regex pattern for matching dates in

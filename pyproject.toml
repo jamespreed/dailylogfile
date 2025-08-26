@@ -1,6 +1,6 @@
 [project]
 name = "dailylogfile"
-version = "0.1.0"
+version = "0.1.1"
 description = "Opinionated daily log file manager with date formatting and compression."
 authors = [
     { name = "James Reed", email = "james.reed@spectric.com" }
