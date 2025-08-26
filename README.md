@@ -26,7 +26,7 @@ The following arguments are supported by `setup_daily_logger` and are passed to 
 * `logfile`: log file path to pass to the DailyLogFileHanlder.
 * `date_format`: the date format to add to the logfile name (default = `'%Y-%m-%d'`).
 * `date_sep`: the separator to use between the logfile prefix and date (default = `'_'`).
-* `compress_after_days`: files older than this many days are compressed with bz2, use `None` to disable (default = `2`).
+* `compress_after_days`: files older than this many days are bz2 compressed, use `None` to disable (default = `2`).
 * `max_history_days`: files older than this many days are removed, use `None` to disable (default = `30`).
 * `logger_name`: name of the logger, `None` uses the stem of the log file as the logger name (default = ` None`).
 * `logger_level`: log level to set for the logger (default = `logging.INFO`).
