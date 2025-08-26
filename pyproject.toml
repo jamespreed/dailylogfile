@@ -7,11 +7,10 @@ name = "dailylogfile"
 version = "0.1.0"
 description = "Opinionated daily log file manager with date formatting and compression."
 authors = [
-    { name = "James Reed" }
+    { name = "James Reed" },
 ]
 maintainers = [
-    { name = "James Reed" }
-https://github.com/jamespreed/dailylogfile
+    { name = "James Reed" },
 ]
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.9"
