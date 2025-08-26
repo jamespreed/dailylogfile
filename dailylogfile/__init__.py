@@ -1,8 +1,56 @@
 import bz2
 import datetime as dt
 import logging
+import re
 import shutil
 from pathlib import Path
+
+
+def _date_format_to_regex(date_format: str) -> str:
+    """
+    Converts a date format string to a regex pattern for matching dates in
+    filenames.
+
+    args:
+        date_format: the date format string to convert.
+    returns:
+        str: the regex pattern.
+    """
+    replacements = {
+        '%a': r'\w+',
+        '%A': r'\w',
+        '%w': r'\d',
+        '%d': r'\d{2}',
+        '%b': r'\w{3}',
+        '%B': r'\w+',
+        '%m': r'\d{2}',
+        '%y': r'\d{2}',
+        '%Y': r'\d{4}',
+        '%H': r'\d{2}',
+        '%I': r'\d{2}',
+        '%p': r'AM|PM',
+        '%M': r'\d{2}',
+        '%S': r'\d{2}',
+        '%f': r'\d{6}',
+        '%z': r'\+|-?\d{4}',
+        '%Z': r'\w+',
+        '%j': r'\d{3}',
+        '%U': r'\d{2}',
+        '%W': r'\d{2}',
+        '%G': r'\d{4}',
+        '%u': r'\d',
+        '%V': r'\d{2}',
+    }
+    percent = '%%'
+    unsupported = ['%c', '%x', '%X']
+    for us in unsupported:
+        if us in date_format:
+            raise ValueError(f'Unsupported date format: {us}')
+    regex = date_format
+    for k, v in replacements.items():
+        regex = regex.replace(k, v)
+    regex = regex.replace(percent, '%')
+    return regex
 
 
 class DailyLogFileHandler(logging.FileHandler):
@@ -14,6 +62,7 @@ class DailyLogFileHandler(logging.FileHandler):
         self, 
         logfile: str | Path,
         date_format: str='%Y-%m-%d',
+        date_sep: str='_',
         compress_after_days: int | None=2,
         max_history_days: int | None=30,
         mode: str='a',
@@ -26,6 +75,7 @@ class DailyLogFileHandler(logging.FileHandler):
             logfile: the path to the log file, a date will be inserted before
                 the extension. If not extension is present, '.log' is added.
             date_format: the date format to add to the logfile name.
+            date_sep: the separator to use between the logfile prefix and date.
             compress_after_days: after this many days old log files are 
                 compressed with bz2, use None to disable.
             max_history_days: after this many days old bz2 log files are
@@ -35,8 +85,16 @@ class DailyLogFileHandler(logging.FileHandler):
             delay: whether file opening is deferred until the first emit().
             errors: determines how encoding errors are handled.
         """
+        if compress_after_days and max_history_days:
+            if (compress_after_days >= max_history_days):
+                raise ValueError(
+                    'compress_after_days must be less than max_history_days'
+                )
+        if Path(logfile).as_posix().lower().endswith('.bz2'):
+            raise ValueError('logfile suffix cannot be .bz2')
         self.logfile = Path(logfile)
         self.date_format = date_format
+        self.date_sep = date_sep
         self.compress_after_days = compress_after_days
         self.max_history_days = max_history_days
         self._current_day = dt.date.today()
@@ -51,7 +109,7 @@ class DailyLogFileHandler(logging.FileHandler):
         Creates the file name based on the logfile prefix, date, and extension.
         """
         d = self._current_day.strftime(self.date_format)
-        return f'{self._logfile_prefix}_{d}{self._logfile_suffix}'
+        return f'{self._logfile_prefix}{self.date_sep}{d}{self._logfile_suffix}'
 
     def _compress_old_logfiles(self) -> None:
         """
@@ -60,10 +118,17 @@ class DailyLogFileHandler(logging.FileHandler):
         if not self.compress_after_days:
             return
         today = dt.date.today()
-        glob_pattern = f'{self._logfile_prefix}*{self._logfile_suffix}'
+        glob_pattern = f'{self._logfile_prefix.name}*{self._logfile_suffix}'
+        stem_pattern = (
+            f'^{re.escape(self._logfile_prefix.name)}'
+            f'{re.escape(self.date_sep)}'
+            f'({_date_format_to_regex(self.date_format)})$'
+        )
         for file in self.logfile.parent.glob(glob_pattern):
-            creation = dt.datetime.fromtimestamp(file.stat().st_ctime).date()
-            if (today - creation).days <= self.compress_after_days:
+            if not (m:=re.match(stem_pattern, file.stem)):
+                continue
+            fdate = dt.datetime.strptime(m.group(1), self.date_format).date()
+            if (today - fdate).days <= self.compress_after_days:
                 continue
             outfile = file.with_suffix(f'{file.suffix}.bz2')
             with file.open('rb') as fpin, bz2.open(outfile, 'wb') as fpout:
@@ -77,13 +142,21 @@ class DailyLogFileHandler(logging.FileHandler):
         if not self.max_history_days:
             return
         today = dt.date.today()
-        if self.compress_after_days:
-            glob_pattern = f'{self._logfile_prefix}*{self._logfile_suffix}.bz2'
-        else:
-            glob_pattern = f'{self._logfile_prefix}*{self._logfile_suffix}'
+        suffix = (
+            f'{self._logfile_suffix}.bz2' if self.compress_after_days 
+            else self._logfile_suffix
+        )
+        glob_pattern = f'{self._logfile_prefix.name}*{suffix}'
+        stem_pattern = (
+            f'^{re.escape(self._logfile_prefix.name)}'
+            f'{re.escape(self.date_sep)}'
+            f'({_date_format_to_regex(self.date_format)})$'
+        )
         for file in self.logfile.parent.glob(glob_pattern):
-            creation = dt.datetime.fromtimestamp(file.stat().st_ctime).date()
-            if (today - creation).days > self.max_history_days:
+            if not (m:=re.match(stem_pattern, file.name.removesuffix(suffix))):
+                continue
+            fdate = dt.datetime.strptime(m.group(1), self.date_format).date()
+            if (today - fdate).days > self.max_history_days:
                 file.unlink()
     
     def _rollover(self) -> None:
@@ -103,21 +176,28 @@ class DailyLogFileHandler(logging.FileHandler):
         self._handle_ageoff()
 
 
-def setup_daily_logging(
-    logfile: str,
+def setup_daily_logger(
+    logfile: str | Path,
     date_format: str='%Y-%m-%d',
-    compress_after_days: int=2,
-    max_history_days: int=30,
+    date_sep: str='_',
+    compress_after_days: int|None=2,
+    max_history_days: int|None=30,
     logger_name: str|None = None,
     logger_level: int=logging.INFO,
     logger_format: str='[%(asctime)s] %(levelname)s - %(message)s',
+    logger_date_format: str='%Y-%m-%d %H:%M:%S',
+    mode: str='a',
+    encoding: str|None=None,
+    delay: bool=False,
+    errors: str|None=None,
     ) -> logging.Logger:
     """
     Sets up a daily logger using the supplied arguments.
 
     args:
-        logfile: log file path to pass to the DailyLogFileHanlder
+        logfile: log file path to pass to the DailyLogFileHanlder.
         date_format: the date format to add to the logfile name.
+        date_sep: the separator to use between the logfile prefix and date.
         compress_after_days: after this many days old log files are compressed
             with bz2, use None to disable.
         max_history_days: after this many days old bz2 log files are removed,
@@ -125,6 +205,11 @@ def setup_daily_logging(
         logger_name: name of the logger, None uses the name of the log file.
         logger_level: log level to set for the logger.
         logger_format: log format to use when writting.
+        logger_date_format: date format to use in the log messages.
+        mode: mode to use when opening logfile.
+        encoding: text encoding to use when writing.
+        delay: whether file opening is deferred until the first emit().
+        errors: determines how encoding errors are handled.
     returns:
         logging.Logger
     """
@@ -133,10 +218,15 @@ def setup_daily_logging(
     handler = DailyLogFileHandler(
         logfile=logfile,
         date_format=date_format,
+        date_sep=date_sep,
         compress_after_days=compress_after_days,
         max_history_days=max_history_days,
+        mode=mode,
+        encoding=encoding,
+        delay=delay,
+        errors=errors,
     )
-    formatter = logging.Formatter(logger_format)
+    formatter = logging.Formatter(fmt=logger_format, datefmt=logger_date_format)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logger_level)
