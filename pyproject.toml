@@ -6,13 +6,14 @@ build-backend = "setuptools.build_meta"
 name = "dailylogfile"
 version = "0.1.0"
 description = "Opinionated daily log file manager with date formatting and compression."
+requires-python = ">=3.9"
+dependencies = []
 authors = [
     { name = "James Reed" },
 ]
 maintainers = [
     { name = "James Reed" },
 ]
-requires-python = ">=3.9"
 readme = {file = "README.md", content-type = "text/markdown"}
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
