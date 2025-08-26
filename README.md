@@ -72,8 +72,8 @@ logger = setup_daily_logger(
     logfile='/data/logs/MyProject.zzz,
     date_format='%Y-%m-%d',
     date_sep='___',
-    compress_after_days=2,
-    max_history_days=5,
+    compress_after_days=1,
+    max_history_days=4,
     logger_name = None,
     logger_level=logging.INFO,
     logger_format='[%(asctime)s] %(levelname)s - %(message)s',
@@ -91,15 +91,15 @@ The arguments `logfile='/data/logs/MyProject.zzz`, `date_format='%Y-%m-%d'`, and
 /data/logs/MyProject___2025-08-24.zzz
 ```
 
-The next arguments: `compress_after_days=2` and `max_history_days=5` will cause log files older than 2 days to compress and older than 5 days to be deleted. On 2025-08-25, the log files would be:
+The next arguments: `compress_after_days=2` and `max_history_days=5` will cause log files older than 1 day to compress and older than 4 days to be deleted. On 2025-08-25, the log files would be:
 ```
 # 2025-08-25 log files:
 /data/logs/MyProject___2025-08-23.zzz.log
-/data/logs/MyProject___2025-08-24.zzz
-/data/logs/MyProject___2025-08-25.zzz
+/data/logs/MyProject___2025-08-24.zzz            # 1 day old
+/data/logs/MyProject___2025-08-25.zzz            # today, 0 days old
 ```
 
-And on 2025-08-27:
+And on 2025-08-27 the previously `.log` files have been compressed:
 ```
 # 2025-08-27 log files:
 /data/logs/MyProject___2025-08-23.zzz.log
