@@ -12,8 +12,10 @@ authors = [
 maintainers = [
     { name = "James Reed" },
 ]
-readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.9"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Developers",
