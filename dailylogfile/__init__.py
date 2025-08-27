@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 
 def _date_format_to_regex(date_format: str) -> str:
@@ -117,6 +117,11 @@ class DailyLogFileHandler(logging.FileHandler):
         f.chmod(self.file_permission)
         return super()._open()
 
+    def emit(self, record: logging.LogRecord) -> None:
+        if self._needs_rollover():
+            self._rollover()
+        return super().emit(record)
+
     def _file_name(self) -> str:
         """
         Creates the file name based on the logfile prefix, date, and extension.
@@ -173,15 +178,18 @@ class DailyLogFileHandler(logging.FileHandler):
             if (today - fdate).days > self.max_history_days:
                 file.unlink()
     
+    def _needs_rollover(self) -> bool:
+        """
+        Checks if a rollover is needed.
+        """
+        new_day = dt.date.today()
+        return new_day == self._current_day
+
     def _rollover(self) -> None:
         """
         Handles rollover of log files at midnight when a script is running.
-        """
-        new_day = dt.date.today()
-        if new_day == self._current_day:
-            # don't rollover is this is called by mistake
-            return
-        self._current_day = new_day
+        """ 
+        self._current_day = dt.date.today()
         if self.stream:
             self.stream.close()
         self.baseFilename = self._file_name()
