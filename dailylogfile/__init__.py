@@ -183,7 +183,7 @@ class DailyLogFileHandler(logging.FileHandler):
         Checks if a rollover is needed.
         """
         new_day = dt.date.today()
-        return new_day == self._current_day
+        return new_day != self._current_day
 
     def _rollover(self) -> None:
         """

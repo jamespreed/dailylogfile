@@ -46,7 +46,9 @@ def test_init_no_compress_no_ageoff():
         f"{LOG_NAME}_2025-08-10.log",
     ]
     files = sorted(f.name for f in LOG_DIR.glob('*'))
-    for expected, actual in zip(expected_files, files):
+    for file in LOG_DIR.glob('*'):
+        print(file.absolute())
+    for expected, actual in zip(expected_files, files, strict=True):
         assert expected == actual
     teardown_log_dir()
 
@@ -72,7 +74,7 @@ def test_init_compress_no_ageoff():
         f"{LOG_NAME}_2025-08-10.log",
     ]
     files = sorted(f.name for f in LOG_DIR.glob('*'))
-    for expected, actual in zip(expected_files, files):
+    for expected, actual in zip(expected_files, files, strict=True):
         assert expected == actual
     teardown_log_dir()
 
@@ -97,7 +99,7 @@ def test_init_compress_ageoff():
         f"{LOG_NAME}_2025-08-10.log",
     ]
     files = sorted(f.name for f in LOG_DIR.glob('*'))
-    for expected, actual in zip(expected_files, files):
+    for expected, actual in zip(expected_files, files, strict=True):
         assert expected == actual
     teardown_log_dir()
 
@@ -109,7 +111,6 @@ def test_rollover():
             logfile=Path(LOG_DIR) / LOG_NAME,
             compress_after_days=2,
             max_history_days=4,
-            logger_format='%(message)s',
         )
         logger.info('PRE-ROLLOVER-MESSAGE')
     with freeze_time(dt.datetime(2025, 8, 11, 0, 1, 1)):
@@ -127,6 +128,31 @@ def test_rollover():
         f"{LOG_NAME}_2025-08-11.log",
     ]
     files = sorted(f.name for f in LOG_DIR.glob('*'))
-    for expected, actual in zip(expected_files, files):
+    for expected, actual in zip(expected_files, files, strict=True):
+        assert expected == actual
+    teardown_log_dir()
+
+def test_gapped_rollover():
+    with freeze_time(dt.datetime(2025, 8, 10, 1, 1, 1)):
+        logger = setup_daily_logger(
+            logfile=Path(LOG_DIR, LOG_NAME),
+            compress_after_days=2,
+            max_history_days=4,
+        )
+        logger.info('PRE ROLLOVER MSG')
+    # 3 days later
+    with freeze_time(dt.datetime(2025, 8, 13, 1, 1, 1)):
+        logger.info('POST ROLLOVER MSG')
+
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
+        handler.close()
+
+    expected_files = [
+        f"{LOG_NAME}_2025-08-10.log.bz2",
+        f"{LOG_NAME}_2025-08-13.log",
+    ]
+    files = sorted(f.name for f in LOG_DIR.glob('*'))
+    for expected, actual in zip(expected_files, files, strict=True):
         assert expected == actual
     teardown_log_dir()
