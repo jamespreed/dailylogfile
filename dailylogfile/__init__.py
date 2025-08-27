@@ -63,15 +63,16 @@ class DailyLogFileHandler(logging.FileHandler):
     """
     def __init__(
         self, 
-        logfile: str | Path,
+        logfile: str|Path,
         date_format: str='%Y-%m-%d',
         date_sep: str='_',
-        compress_after_days: int | None=2,
-        max_history_days: int | None=30,
+        compress_after_days: int|None=2,
+        max_history_days: int|None=30,
         mode: str='a',
         encoding: str|None=None,
         delay: bool=False,
         errors: str|None=None,
+        file_permission: int = 0o640
         ) -> None:
         """
         args:
@@ -87,6 +88,7 @@ class DailyLogFileHandler(logging.FileHandler):
             encoding: text encoding to use when writing.
             delay: whether file opening is deferred until the first emit().
             errors: determines how encoding errors are handled.
+            file_permission: permissions to set for the logs (default=0o640).
         """
         if compress_after_days and max_history_days:
             if (compress_after_days >= max_history_days):
@@ -100,10 +102,16 @@ class DailyLogFileHandler(logging.FileHandler):
         self.date_sep = date_sep
         self.compress_after_days = compress_after_days
         self.max_history_days = max_history_days
+        self.file_permission = file_permission
         self._current_day = dt.date.today()
         self._logfile_prefix = self.logfile.with_suffix('')
         self._logfile_suffix = self.logfile.suffix or '.log'
         self.logfile.parent.mkdir(exist_ok=True, parents=True)
+        if (f := Path(self._file_name())).exists():
+            f.chmod(self.file_permission)
+        else:
+            f.touch()
+            f.chmod(self.file_permission)
         super().__init__(self._file_name(), mode, encoding, delay, errors)
         self._compress_old_logfiles()
         self._handle_ageoff()
@@ -174,6 +182,11 @@ class DailyLogFileHandler(logging.FileHandler):
         self._current_day = new_day
         if self.stream:
             self.stream.close()
+        if (f := Path(self._file_name())).exists():
+            f.chmod(self.file_permission)
+        else:
+            f.touch()
+            f.chmod(self.file_permission)
         self.baseFilename = self._file_name()
         self.stream = self._open()
         self._compress_old_logfiles()
@@ -181,7 +194,7 @@ class DailyLogFileHandler(logging.FileHandler):
 
 
 def setup_daily_logger(
-    logfile: str | Path,
+    logfile: str|Path,
     date_format: str='%Y-%m-%d',
     date_sep: str='_',
     compress_after_days: int|None=2,
