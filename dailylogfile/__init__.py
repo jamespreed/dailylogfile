@@ -72,7 +72,7 @@ class DailyLogFileHandler(logging.FileHandler):
         encoding: str|None=None,
         delay: bool=False,
         errors: str|None=None,
-        file_permission: int = 0o640
+        file_permission: int = 0o640,
         ) -> None:
         """
         args:
@@ -107,14 +107,15 @@ class DailyLogFileHandler(logging.FileHandler):
         self._logfile_prefix = self.logfile.with_suffix('')
         self._logfile_suffix = self.logfile.suffix or '.log'
         self.logfile.parent.mkdir(exist_ok=True, parents=True)
-        if (f := Path(self._file_name())).exists():
-            f.chmod(self.file_permission)
-        else:
-            f.touch()
-            f.chmod(self.file_permission)
         super().__init__(self._file_name(), mode, encoding, delay, errors)
         self._compress_old_logfiles()
         self._handle_ageoff()
+
+    def _open(self):
+        f = Path(self.baseFilename)
+        f.touch(exist_ok=True)
+        f.chmod(self.file_permission)
+        return super()._open()
 
     def _file_name(self) -> str:
         """
@@ -145,6 +146,7 @@ class DailyLogFileHandler(logging.FileHandler):
             outfile = file.with_suffix(f'{file.suffix}.bz2')
             with file.open('rb') as fpin, bz2.open(outfile, 'wb') as fpout:
                 shutil.copyfileobj(fpin, fpout)
+            outfile.chmod(self.file_permission)
             file.unlink()
 
     def _handle_ageoff(self) -> None:
@@ -182,11 +184,6 @@ class DailyLogFileHandler(logging.FileHandler):
         self._current_day = new_day
         if self.stream:
             self.stream.close()
-        if (f := Path(self._file_name())).exists():
-            f.chmod(self.file_permission)
-        else:
-            f.touch()
-            f.chmod(self.file_permission)
         self.baseFilename = self._file_name()
         self.stream = self._open()
         self._compress_old_logfiles()
@@ -207,6 +204,7 @@ def setup_daily_logger(
     encoding: str|None=None,
     delay: bool=False,
     errors: str|None=None,
+    file_permission: int = 0o640,
     ) -> logging.Logger:
     """
     Sets up a daily logger using the supplied arguments.
@@ -227,6 +225,7 @@ def setup_daily_logger(
         encoding: text encoding to use when writing.
         delay: whether file opening is deferred until the first emit().
         errors: determines how encoding errors are handled.
+        file_permission: permissions to set for the logs (default=0o640).
     returns:
         logging.Logger
     """
@@ -242,6 +241,7 @@ def setup_daily_logger(
         encoding=encoding,
         delay=delay,
         errors=errors,
+        file_permission=file_permission,
     )
     formatter = logging.Formatter(fmt=logger_format, datefmt=logger_date_format)
     handler.setFormatter(formatter)
