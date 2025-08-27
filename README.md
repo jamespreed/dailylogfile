@@ -94,17 +94,17 @@ The arguments `logfile='/data/logs/MyProject.zzz`, `date_format='%Y-%m-%d'`, and
 The next arguments: `compress_after_days=1` and `max_history_days=4` will cause log files older than 1 day to compress and older than 4 days to be deleted. On 2025-08-25, the log files would be:
 ```
 # 2025-08-25 log files:
-/data/logs/MyProject___2025-08-23.zzz.log
+/data/logs/MyProject___2025-08-23.zzz.bz2
 /data/logs/MyProject___2025-08-24.zzz            # 1 day old
 /data/logs/MyProject___2025-08-25.zzz            # today, 0 days old
 ```
 
-And on 2025-08-27 the previously `.log` files have been compressed:
+And on 2025-08-27 the previously `.zzz` log files have been compressed:
 ```
 # 2025-08-27 log files:
-/data/logs/MyProject___2025-08-23.zzz.log
-/data/logs/MyProject___2025-08-24.zzz.log
-/data/logs/MyProject___2025-08-25.zzz.log
+/data/logs/MyProject___2025-08-23.zzz.bz2
+/data/logs/MyProject___2025-08-24.zzz.bz2
+/data/logs/MyProject___2025-08-25.zzz.bz2
 /data/logs/MyProject___2025-08-26.zzz
 /data/logs/MyProject___2025-08-27.zzz
 ```
@@ -112,9 +112,9 @@ And on 2025-08-27 the previously `.log` files have been compressed:
 When the date moves from 2025-08-27 to 2025-08-28, the oldest log file will be aged off:
 ```
 # 2025-08-28 log files:
-/data/logs/MyProject___2025-08-24.zzz.log
-/data/logs/MyProject___2025-08-25.zzz.log
-/data/logs/MyProject___2025-08-26.zzz.log
+/data/logs/MyProject___2025-08-24.zzz.bz2
+/data/logs/MyProject___2025-08-25.zzz.bz2
+/data/logs/MyProject___2025-08-26.zzz.bz2
 /data/logs/MyProject___2025-08-27.zzz
 /data/logs/MyProject___2025-08-28.zzz
 ```
