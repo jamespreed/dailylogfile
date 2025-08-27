@@ -36,6 +36,7 @@ The following arguments are supported by `setup_daily_logger` and are passed to 
 * `encoding`: text encoding to use when writing (default = `None`).
 * `delay`: whether file opening is deferred until the first `emit()` (default = `False`).
 * `errors`: determines how encoding errors are handled (default = `None`).
+* `file_permission`: permissions to set for the logs (default=0o640).
 
 ## Details
 This is how the `DailyLogFileHandler` handles files under the hood.
@@ -82,6 +83,7 @@ logger = setup_daily_logger(
     encoding=None,
     delay=False,
     errors=None,
+    file_permission=0o640,
 )
 ```
 
@@ -127,5 +129,6 @@ logging.getLogger('MyProject')
 
 The next arguments: `logger_level=logging.INFO`, `logger_format='[%(asctime)s] %(levelname)s - %(message)s'`, and `logger_date_format='%Y-%m-%d %H:%M:%S'` set the logger level for this logger to INFO, set the logger format, and datetime format for `%(asctime)s`.
 
-The finale arguments: `mode='a'`, `encoding=None`, `delay=False`, and `errors=None` are the passed to the super class `logging.FileHandler`.  They control the file mode, file encoding, delayed file creation, and how encoding errors are handled.
+The arguments: `mode='a'`, `encoding=None`, `delay=False`, and `errors=None` are the passed to the super class `logging.FileHandler`.  They control the file mode, file encoding, delayed file creation, and how encoding errors are handled.
 
+The final argument is used to set file permissions when creating adding the log file.
