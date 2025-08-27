@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 
 
 def _date_format_to_regex(date_format: str) -> str:
