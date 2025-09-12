@@ -3,6 +3,7 @@ import datetime as dt
 import logging
 import re
 import shutil
+import sys
 from pathlib import Path
 
 
@@ -66,7 +67,7 @@ class DailyLogFileHandler(logging.FileHandler):
         logfile: str|Path,
         date_format: str='%Y-%m-%d',
         date_sep: str='_',
-        compress_after_days: int|None=2,
+        compress_after_days: int|None=5,
         max_history_days: int|None=30,
         mode: str='a',
         encoding: str|None=None,
@@ -199,10 +200,10 @@ class DailyLogFileHandler(logging.FileHandler):
 
 
 def setup_daily_logger(
-    logfile: str|Path,
+    logfile: str|Path|None,
     date_format: str='%Y-%m-%d',
     date_sep: str='_',
-    compress_after_days: int|None=2,
+    compress_after_days: int|None=5,
     max_history_days: int|None=30,
     logger_name: str|None = None,
     logger_level: int=logging.INFO,
@@ -218,7 +219,8 @@ def setup_daily_logger(
     Sets up a daily logger using the supplied arguments.
 
     args:
-        logfile: log file path to pass to the DailyLogFileHanlder.
+        logfile: log file path to pass to the DailyLogFileHanlder, passing None
+            logs to stdout.
         date_format: the date format to add to the logfile name.
         date_sep: the separator to use between the logfile prefix and date.
         compress_after_days: after this many days old log files are compressed
@@ -237,20 +239,24 @@ def setup_daily_logger(
     returns:
         logging.Logger
     """
-    logger_name = logger_name or Path(logfile).stem
+    if (logfile is None) or (not logfile):
+        logger_name = Path(__file__).stem
+        handler = logging.StreamHandler(sys.stdout)
+    else:
+        logger_name = logger_name or Path(logfile).stem
+        handler = DailyLogFileHandler(
+            logfile=logfile,
+            date_format=date_format,
+            date_sep=date_sep,
+            compress_after_days=compress_after_days,
+            max_history_days=max_history_days,
+            mode=mode,
+            encoding=encoding,
+            delay=delay,
+            errors=errors,
+            file_permission=file_permission,
+        )
     logger = logging.getLogger(logger_name)
-    handler = DailyLogFileHandler(
-        logfile=logfile,
-        date_format=date_format,
-        date_sep=date_sep,
-        compress_after_days=compress_after_days,
-        max_history_days=max_history_days,
-        mode=mode,
-        encoding=encoding,
-        delay=delay,
-        errors=errors,
-        file_permission=file_permission,
-    )
     formatter = logging.Formatter(fmt=logger_format, datefmt=logger_date_format)
     handler.setFormatter(formatter)
     logger.addHandler(handler)

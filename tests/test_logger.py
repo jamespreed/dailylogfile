@@ -156,3 +156,14 @@ def test_gapped_rollover():
     for expected, actual in zip(expected_files, files, strict=True):
         assert expected == actual
     teardown_log_dir()
+
+def test_stdout_loggint(capsys):
+    with freeze_time(dt.datetime(2025, 8, 10, 1, 1, 1)):
+        logger = setup_daily_logger(
+            logfile=None,
+            logger_format='%(message)s'
+        )
+        message = 'HELLO WORLD'
+        logger.info(message)
+        captured = capsys.readouterr()
+        assert captured.out == f'{message}\n'

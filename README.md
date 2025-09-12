@@ -23,7 +23,7 @@ logger.info('Logger initialized')
 ```
 
 The following arguments are supported by `setup_daily_logger` and are passed to the `DailyLogFileHandler` class initiator:
-* `logfile`: log file path to pass to the DailyLogFileHanlder.
+* `logfile`: log file path to pass to the DailyLogFileHanlder, passing `None` logs to stdout.
 * `date_format`: the date format to add to the logfile name (default = `'%Y-%m-%d'`).
 * `date_sep`: the separator to use between the logfile prefix and date (default = `'_'`).
 * `compress_after_days`: files older than this many days are bz2 compressed, use `None` to disable (default = `2`).
